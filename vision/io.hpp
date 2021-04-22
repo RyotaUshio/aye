@@ -16,7 +16,7 @@ namespace vision {
     auto min = numpy::min(image);
     auto out = image.copy();
     out -= min;
-    out *= 256.0 / (max - min);
+    out *= 255.0 / (max - min);
     return out;
   }
 
