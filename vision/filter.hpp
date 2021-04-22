@@ -27,7 +27,7 @@ namespace vision {
     for (int i=0; i<size; i++)
       for (int j=0; j<size; j++) {
 	auto l2_dist = (i - sigma) * (i - sigma) + (j - sigma) * (j - sigma);
-	out(i, j) = std::exp(-l2_dist);
+	out(i, j) = std::exp(-l2_dist / (2.0 * sigma * sigma));
       }
     return out;
   }
