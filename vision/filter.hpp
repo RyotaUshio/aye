@@ -7,7 +7,26 @@
 
 
 namespace vision {
-    
+
+ 
+  Kernel forward_diff_x({0, 0, 0,
+			 0,-1, 1,
+			 0, 0, 0}, {3, 3});
+  Kernel forward_diff_y({0, 0, 0,
+			 0, 1, 0,
+			 0,-1, 0}, {3, 3});
+  Kernel backward_diff_x({0, 0, 0,
+			 -1, 1, 0,
+			  0, 0, 0}, {3, 3});
+  Kernel backward_diff_y({0, 1, 0,
+			  0,-1, 0,
+			  0, 0, 0}, {3, 3});
+  Kernel centered_diff_x({0, 0, 0,
+			 -1, 0, 1,
+			  0, 0, 0}, {3, 3});
+  Kernel centered_diff_y({0, 1, 0,
+			  0, 0, 0,
+			  0,-1, 0}, {3, 3});
   Kernel Prewitt_x({-1, 0, 1,
 		    -1, 0, 1,
 		    -1, 0, 1}, {3, 3});
@@ -21,12 +40,12 @@ namespace vision {
 		   0,  0,  0,
 		  1,  2,  1}, {3, 3});
 
-  Kernel Gauss(numpy::size_type sigma) {
-    auto size = sigma * 2 + 1; // size of the kernel
+  Kernel Gauss(numpy::float64 sigma, numpy::float64 truncate=4.0) {
+    numpy::size_type size = 2 * std::round(truncate * sigma) + 1; // size of the kernel
     Kernel out = numpy::empty({size, size});
     for (int i=0; i<size; i++)
       for (int j=0; j<size; j++) {
-	auto l2_dist = (i - sigma) * (i - sigma) + (j - sigma) * (j - sigma);
+	numpy::float64 l2_dist = (i - sigma) * (i - sigma) + (j - sigma) * (j - sigma);
 	out(i, j) = std::exp(-l2_dist / (2.0 * sigma * sigma));
       }
     return out;
@@ -58,17 +77,61 @@ namespace vision {
   
   Image convolve(const Image& image, const Kernel& kernel) {
     numpy::size_type pad_size = kernel.shape(0) / 2;
+    auto shape = image.shape();
     auto input = pad_zero(image, pad_size);
-    auto shape = input.shape();
     auto output = numpy::empty(shape);
 
-    for(int i=pad_size; i<shape[0]-pad_size; i++)
-      for(int j=pad_size; j<shape[1]-pad_size; j++) {
-	auto local = input(python::slice(i - pad_size, i + pad_size + 1),
-			   python::slice(j - pad_size, j + pad_size + 1));
+    for(int i=0; i<shape[0]; i++)
+      for(int j=0; j<shape[1]; j++) {
+	auto local = input(python::slice(i, i + 2 * pad_size + 1),
+			   python::slice(j, j + 2 * pad_size + 1));
 	output(i, j) = std::inner_product(local.begin(), local.end(), kernel.begin(), 0);
       }
-    return output(python::slice(pad_size, -pad_size),
-		  python::slice(pad_size, -pad_size)); // zero paddingした部分をもとに戻す
+    return output;
   }
+
+  template <const Kernel& filter_x, const Kernel& filter_y>
+  struct gradient {
+    const Image& src;
+    int magnitude_order;
+    Image diff_x;
+    Image diff_y;
+    Image magnitude;
+    Image direction;
+
+    gradient(const Image& input, int order=2)
+      : src(input), magnitude_order(order) {
+      operator()();
+    }
+
+  private:
+    void differentiate() {
+      diff_x = convolve(src, filter_x);
+      diff_y = convolve(src, filter_y);
+    }
+
+    void set_magnitude() {
+      if (magnitude_order == 1)
+	magnitude = numpy::fabs(diff_x) + numpy::fabs(diff_y);
+      else if (magnitude_order == 2)
+	magnitude = numpy::sqrt(diff_x * diff_x + diff_y * diff_y);
+    }
+
+    void set_direction() {
+      direction = numpy::arctan2(diff_y, diff_x);
+    }
+
+    void operator()() {
+      differentiate();
+      set_magnitude();
+      set_direction();
+    }
+  };
+
+  using forward_diff = gradient<forward_diff_x, forward_diff_y>;
+  using backward_diff = gradient<backward_diff_x, backward_diff_y>;
+  using centered_diff = gradient<centered_diff_x, centered_diff_y>;
+  using Prewitt = gradient<Prewitt_x, Prewitt_y>;
+  using Sobel = gradient<Sobel_x, Sobel_y>;
+
 }
