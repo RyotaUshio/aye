@@ -4,7 +4,7 @@ HEADER = $(wildcard ./vision/*.hpp)
 SRC = $(wildcard ./test/*.cpp)
 EXC = $(basename $(SRC))
 
-.PHONY: clean all run
+.PHONY: clean all run render open
 
 all: run
 
@@ -13,6 +13,12 @@ all: run
 
 run: $(EXC)
 	for name in $(EXC); do $$name; done
+
+render: images/*.txt
+	@ls $^ | xargs -L 1 ./io to_image
+
+open:
+	open ./images/*.jpg
 
 clean:
 	rm $(EXC)
