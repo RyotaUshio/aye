@@ -71,5 +71,4 @@ namespace vision {
     return output(python::slice(pad_size, -pad_size),
 		  python::slice(pad_size, -pad_size)); // zero paddingした部分をもとに戻す
   }
-  
 }
