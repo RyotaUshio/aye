@@ -8,6 +8,7 @@ int main() {
     auto prewitt = vision::Prewitt(image);
     auto center = vision::centered_diff(image);
     auto gauss = vision::convolve(image, vision::Gauss(1.4));
+    auto log = vision::convolve(image, vision::LoG(1.4));
     
     vision::savetxt("images/lena.txt", image);
     vision::savetxt("images/lena_prewitt_x.txt", prewitt.diff_x);
@@ -17,6 +18,7 @@ int main() {
     vision::savetxt("images/lena_center_y.txt", center.diff_y);
     vision::savetxt("images/lena_center_mag.txt", center.magnitude);
     vision::savetxt("images/lena_gauss.txt", gauss);
+    vision::savetxt("images/lena_log.txt", log);
   } catch(const std::exception& e) {
     print(e);
   }

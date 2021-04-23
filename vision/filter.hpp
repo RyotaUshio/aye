@@ -40,15 +40,38 @@ namespace vision {
 		   0,  0,  0,
 		  1,  2,  1}, {3, 3});
 
-  Kernel Gauss(numpy::float64 sigma, numpy::float64 truncate=4.0) {
-    numpy::size_type size = 2 * std::round(truncate * sigma) + 1; // size of the kernel
+  Kernel _l2_dist_sq(numpy::float64 sigma, numpy::float64 truncate) {
+    numpy::size_type radius = std::round(truncate * sigma);
+    numpy::size_type size = 2 * radius + 1; // size of the kernel
     Kernel out = numpy::empty({size, size});
     for (int i=0; i<size; i++)
-      for (int j=0; j<size; j++) {
-	numpy::float64 l2_dist = (i - sigma) * (i - sigma) + (j - sigma) * (j - sigma);
-	out(i, j) = std::exp(-l2_dist / (2.0 * sigma * sigma));
-      }
+      for (int j=0; j<size; j++)
+	out(i, j) = (i - radius) * (i - radius) + (j - radius) * (j - radius);
     return out;
+  }
+
+  template <bool is_gauss>
+  Kernel _Gauss_or_LoG(numpy::float64 sigma, numpy::float64 truncate) {
+    auto tmp = 2.0 * sigma * sigma;
+    auto x2 = _l2_dist_sq(sigma, truncate);
+    auto out = numpy::exp(-x2 / tmp); // Gaussian
+    if constexpr (is_gauss) {
+      return out;
+    } else {
+      return out *= x2 - tmp; // LoG
+    }
+  }
+
+  inline Kernel Gauss(numpy::float64 sigma, numpy::float64 truncate=4.0) {
+    return _Gauss_or_LoG<true>(sigma, truncate);
+  }
+  
+  inline Kernel LoG(numpy::float64 sigma, numpy::float64 truncate=4.0) {
+    return _Gauss_or_LoG<false>(sigma, truncate);
+  }
+
+  Kernel Gauss_deriv_x(numpy::float64 sigma, numpy::float64 truncate=4.0) {
+    return Gauss(sigma, truncate) *= 
   }
   
   void pad_zero(const Image& image, numpy::size_type pad_size, Image& out) {

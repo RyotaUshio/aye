@@ -9,8 +9,8 @@ namespace vision {
     numpy::float64 k;
 
     /* results */
-    Image response;
-    // Image corner;
+    Image response; // distribution of the corner response function
+    // Image corner; // local maximum of response
 
     Harris(const Image& input_, const Kernel& window_, numpy::float64 sigma_, numpy::float64 k_=0.05)
       : input(input_), window(window_), sigma(sigma_), k(k_) {
@@ -31,9 +31,7 @@ namespace vision {
 
       auto det = S_xx * S_yy - S_xy * S_xy;
       auto trace = S_xx + S_yy;
-      auto trace_sq = trace * trace;
-      trace_sq *= k;
-      response = det - trace_sq; // corner response function
+      response = det - k * trace * trace;
     }
 
     // non-maximum supression
