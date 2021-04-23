@@ -46,32 +46,55 @@ namespace vision {
     Kernel out = numpy::empty({size, size});
     for (int i=0; i<size; i++)
       for (int j=0; j<size; j++)
-	out(i, j) = (i - radius) * (i - radius) + (j - radius) * (j - radius);
+    	out(i, j) = (i - radius) * (i - radius) + (j - radius) * (j - radius);
     return out;
   }
 
-  template <bool is_gauss>
-  Kernel _Gauss_or_LoG(numpy::float64 sigma, numpy::float64 truncate) {
+  template <unsigned int which>
+  Kernel _Gaussian_filters(numpy::float64 sigma, numpy::float64 truncate) {
+    /**
+     * which == 0 -> Gaussian
+     * which == 1 -> x-derivative of Gaussian
+     * which == 2 -> y-derivative of Gaussian
+     * which == 3 -> LoG
+     **/
+    numpy::size_type radius = std::round(truncate * sigma);
+    numpy::size_type size = 2 * radius + 1; // size of the kernel
     auto tmp = 2.0 * sigma * sigma;
-    auto x2 = _l2_dist_sq(sigma, truncate);
-    auto out = numpy::exp(-x2 / tmp); // Gaussian
-    if constexpr (is_gauss) {
+    
+    auto xy = numpy::indices<numpy::float64>({size, size}) - radius;
+    auto x = xy(0);
+    auto y = xy(1);
+    auto x2_y2 = x*x + y*y;
+    
+    auto out = numpy::exp(-x2_y2 / tmp); // Gaussian
+    
+    if constexpr (which == 0) {
       return out;
-    } else {
-      return out *= x2 - tmp; // LoG
+    } else if constexpr (which == 1) {
+	return out *= x *= -1.0;
+    } else if constexpr (which == 2) {
+	return out *= y *= -1.0;
+    } else if constexpr (which == 3) {
+      return out *= x2_y2 - tmp; // LoG
     }
+    static_assert(which < 4);
   }
 
   inline Kernel Gauss(numpy::float64 sigma, numpy::float64 truncate=4.0) {
-    return _Gauss_or_LoG<true>(sigma, truncate);
-  }
-  
-  inline Kernel LoG(numpy::float64 sigma, numpy::float64 truncate=4.0) {
-    return _Gauss_or_LoG<false>(sigma, truncate);
+    return _Gaussian_filters<0>(sigma, truncate);
   }
 
-  Kernel Gauss_deriv_x(numpy::float64 sigma, numpy::float64 truncate=4.0) {
-    return Gauss(sigma, truncate) *= 
+  inline Kernel Gauss_deriv_x(numpy::float64 sigma, numpy::float64 truncate=4.0) {
+    return _Gaussian_filters<1>(sigma, truncate);
+  }
+
+  inline Kernel Gauss_deriv_y(numpy::float64 sigma, numpy::float64 truncate=4.0) {
+    return _Gaussian_filters<2>(sigma, truncate);
+  }
+
+  inline Kernel LoG(numpy::float64 sigma, numpy::float64 truncate=4.0) {
+    return _Gaussian_filters<3>(sigma, truncate);
   }
   
   void pad_zero(const Image& image, numpy::size_type pad_size, Image& out) {
@@ -113,17 +136,18 @@ namespace vision {
     return output;
   }
 
-  template <const Kernel& filter_x, const Kernel& filter_y>
   struct gradient {
     const Image& src;
+    const Kernel& filter_x;
+    const Kernel& filter_y;	
     int magnitude_order;
     Image diff_x;
     Image diff_y;
     Image magnitude;
     Image direction;
 
-    gradient(const Image& input, int order=2)
-      : src(input), magnitude_order(order) {
+    gradient(const Image& input, const Kernel& filter_x_, const Kernel& filter_y_, int order)
+      : src(input), filter_x(filter_x_), filter_y(filter_y_), magnitude_order(order) {
       operator()();
     }
 
@@ -135,9 +159,9 @@ namespace vision {
 
     void set_magnitude() {
       if (magnitude_order == 1)
-	magnitude = numpy::fabs(diff_x) + numpy::fabs(diff_y);
+  	magnitude = numpy::fabs(diff_x) + numpy::fabs(diff_y);
       else if (magnitude_order == 2)
-	magnitude = numpy::sqrt(diff_x * diff_x + diff_y * diff_y);
+  	magnitude = numpy::sqrt(diff_x * diff_x + diff_y * diff_y);
     }
 
     void set_direction() {
@@ -151,10 +175,75 @@ namespace vision {
     }
   };
 
-  using forward_diff = gradient<forward_diff_x, forward_diff_y>;
-  using backward_diff = gradient<backward_diff_x, backward_diff_y>;
-  using centered_diff = gradient<centered_diff_x, centered_diff_y>;
-  using Prewitt = gradient<Prewitt_x, Prewitt_y>;
-  using Sobel = gradient<Sobel_x, Sobel_y>;
+
+  struct forward_diff : public gradient {
+    forward_diff(const Image& input, int order=2) : gradient(input, forward_diff_x, forward_diff_y, order) {}
+  };
+
+  struct backward_diff : public gradient {
+    backward_diff(const Image& input, int order=2) : gradient(input, backward_diff_x, backward_diff_y, order) {}
+  };
+
+  struct centered_diff : public gradient {
+    centered_diff(const Image& input, int order=2) : gradient(input, centered_diff_x, centered_diff_y, order) {}
+  };
+  
+  struct Prewitt : public gradient {
+    Prewitt(const Image& input, int order=2) : gradient(input, Prewitt_x, Prewitt_y, order) {}
+  };
+
+  struct Sobel : public gradient {
+    Sobel(const Image& input, int order=2) : gradient(input, Sobel_x, Sobel_y, order) {}
+  };
+
+  struct Gauss_gradient : public gradient {
+    Gauss_gradient(const Image& input, numpy::float64 sigma=1.4, numpy::float64 truncate=4.0, int order=2)
+      : gradient(input, Gauss_deriv_x(sigma, truncate), Gauss_deriv_y(sigma, truncate), order) {}
+  };
+
+  // template <const Kernel& filter_x, const Kernel& filter_y>
+  // struct gradient {
+  //   const Image& src;
+  //   int magnitude_order;
+  //   Image diff_x;
+  //   Image diff_y;
+  //   Image magnitude;
+  //   Image direction;
+
+  //   gradient(const Image& input, int order=2)
+  //     : src(input), magnitude_order(order) {
+  //     operator()();
+  //   }
+
+  // private:
+  //   void differentiate() {
+  //     diff_x = convolve(src, filter_x);
+  //     diff_y = convolve(src, filter_y);
+  //   }
+
+  //   void set_magnitude() {
+  //     if (magnitude_order == 1)
+  // 	magnitude = numpy::fabs(diff_x) + numpy::fabs(diff_y);
+  //     else if (magnitude_order == 2)
+  // 	magnitude = numpy::sqrt(diff_x * diff_x + diff_y * diff_y);
+  //   }
+
+  //   void set_direction() {
+  //     direction = numpy::arctan2(diff_y, diff_x);
+  //   }
+
+  //   void operator()() {
+  //     differentiate();
+  //     set_magnitude();
+  //     set_direction();
+  //   }
+  // };
+
+  
+  // using forward_diff = gradient<forward_diff_x, forward_diff_y>;
+  // using backward_diff = gradient<backward_diff_x, backward_diff_y>;
+  // using centered_diff = gradient<centered_diff_x, centered_diff_y>;
+  // using Prewitt = gradient<Prewitt_x, Prewitt_y>;
+  // using Sobel = gradient<Sobel_x, Sobel_y>;
 
 }
