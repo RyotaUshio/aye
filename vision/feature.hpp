@@ -2,25 +2,49 @@
 
 namespace vision {
 
-  Image Harris(const Image& image, numpy::size_type sigma, numpy::float64 k=0.06) {
-    auto I_x = convolve(image, Sobel_x);
-    auto I_y = convolve(image, Sobel_y);
-    auto I_xx = I_x * I_x;
-    auto I_xy = I_x * I_y;
-    auto I_yy = I_y * I_y;
-    auto gauss = Gauss(sigma);
-    // auto gauss = numpy::ones({sigma * 2 + 1, sigma * 2 + 1});
-    auto S_xx = convolve(I_xx, gauss);
-    auto S_xy = convolve(I_xy, gauss);
-    auto S_yy = convolve(I_yy, gauss);
+  struct Harris {
+    const Image& input;
+    const Kernel& window;
+    numpy::float64 sigma; // はじめの平滑化のガウスフィルタ
+    numpy::float64 k;
 
-    auto det = S_xx * S_yy - S_xy * S_xy;
-    auto trace = S_xx + S_yy;
-    auto trace_sq = trace * trace;
-    trace_sq *= k;
-    auto C = det - trace_sq; // corner response function
+    /* results */
+    Image response;
+    // Image corner;
+
+    Harris(const Image& input_, const Kernel& window_, numpy::float64 sigma_, numpy::float64 k_=0.05)
+      : input(input_), window(window_), sigma(sigma_), k(k_) {
+      set_response();
+      // set_corner();
+    }
     
-    return C;
-  }
+  private:
+    void set_response() {
+      auto I_x = convolve(input, Sobel_x);
+      auto I_y = convolve(input, Sobel_y);
+      auto I_xx = I_x * I_x;
+      auto I_xy = I_x * I_y;
+      auto I_yy = I_y * I_y;
+      auto S_xx = convolve(I_xx, window);
+      auto S_xy = convolve(I_xy, window);
+      auto S_yy = convolve(I_yy, window);
+
+      auto det = S_xx * S_yy - S_xy * S_xy;
+      auto trace = S_xx + S_yy;
+      auto trace_sq = trace * trace;
+      trace_sq *= k;
+      response = det - trace_sq; // corner response function
+    }
+
+    // non-maximum supression
+    // void set_corner() {
+    
+    // }
+    
+  };
+
+  // Image Canny(const Image& image, numpy::float64 sigma=1.4) {
+    
+  // }
   
 }
