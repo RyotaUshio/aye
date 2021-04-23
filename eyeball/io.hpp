@@ -1,13 +1,13 @@
 #pragma once
 
-#include <vision/core.hpp>
+#include <eyeball/core.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdlib>
 
-namespace vision {
+namespace eyeball {
 
   // Image imread(const std::string& filename) {}
 

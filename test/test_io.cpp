@@ -1,15 +1,15 @@
-#include <vision/vision.hpp>
+#include <eyeball/eyeball.hpp>
 using namespace python;
 namespace np = numpy;
 
 int main() {
   try {
-    vision::Image image = np::loadtxt("images/miri.txt");
-    auto out = vision::Harris(image, 2);
+    eyeball::Image image = np::loadtxt("images/miri.txt");
+    auto out = eyeball::Harris(image, 2);
     auto max = np::max(out);
     auto min = np::min(out);
     out = np::maximum(out, np::ndarray(max * 0.3 + min * 0.7));
-    vision::savetxt("images/miri_harris.txt", out);
+    eyeball::savetxt("images/miri_harris.txt", out);
   } catch (const std::exception& e) {
     print(e);
   }

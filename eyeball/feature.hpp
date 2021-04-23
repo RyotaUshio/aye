@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vision {
+namespace eyeball {
 
   struct Harris {
     const Image& input;

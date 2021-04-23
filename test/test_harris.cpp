@@ -1,12 +1,12 @@
-#include <vision/vision.hpp>
+#include <eyeball/eyeball.hpp>
 using namespace python;
 namespace np = numpy;
 
 int main() {
   try {
-    auto image = vision::sample::corner;
-    auto harris = vision::Harris(image, vision::Gauss(1), 3);
-    vision::savetxt("./images/harris_response.txt", harris.response);
+    auto image = eyeball::sample::corner;
+    auto harris = eyeball::Harris(image, eyeball::Gauss(1), 3);
+    eyeball::savetxt("./images/harris_response.txt", harris.response);
   } catch(const std::exception& e) {
     print(e);
   }

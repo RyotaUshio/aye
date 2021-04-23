@@ -2,7 +2,7 @@
 
 #include <numpy/numpy.hpp>
 
-namespace vision {
+namespace eyeball {
   using Image = numpy::ndarray<double>;
   using Kernel = numpy::ndarray<double>;
 }

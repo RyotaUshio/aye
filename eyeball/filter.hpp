@@ -1,12 +1,12 @@
 #pragma once
 
-#include <vision/core.hpp>
+#include <eyeball/core.hpp>
 
 #include <cmath> // std::exp
 #include <numeric> // std::inner_product
 
 
-namespace vision {
+namespace eyeball {
 
  
   Kernel forward_diff_x({0, 0, 0,
@@ -40,16 +40,6 @@ namespace vision {
 		   0,  0,  0,
 		  1,  2,  1}, {3, 3});
 
-  Kernel _l2_dist_sq(numpy::float64 sigma, numpy::float64 truncate) {
-    numpy::size_type radius = std::round(truncate * sigma);
-    numpy::size_type size = 2 * radius + 1; // size of the kernel
-    Kernel out = numpy::empty({size, size});
-    for (int i=0; i<size; i++)
-      for (int j=0; j<size; j++)
-    	out(i, j) = (i - radius) * (i - radius) + (j - radius) * (j - radius);
-    return out;
-  }
-
   template <unsigned int which>
   Kernel _Gaussian_filters(numpy::float64 sigma, numpy::float64 truncate) {
     /**
@@ -60,23 +50,24 @@ namespace vision {
      **/
     numpy::size_type radius = std::round(truncate * sigma);
     numpy::size_type size = 2 * radius + 1; // size of the kernel
-    auto tmp = 2.0 * sigma * sigma;
+    auto sigma_sq = sigma * sigma;
+    auto tmp = 2.0 * sigma_sq;
     
     auto xy = numpy::indices<numpy::float64>({size, size}) - radius;
     auto x = xy(0);
     auto y = xy(1);
     auto x2_y2 = x*x + y*y;
     
-    auto out = numpy::exp(-x2_y2 / tmp); // Gaussian
+    auto out = numpy::exp(-x2_y2 / tmp) / std::sqrt(numpy::pi * tmp); // Gaussian
     
     if constexpr (which == 0) {
       return out;
     } else if constexpr (which == 1) {
-	return out *= x *= -1.0;
+	return out *= x;// /= -sigma_sq;
     } else if constexpr (which == 2) {
-	return out *= y *= -1.0;
+	return out *= y;// /= -sigma_sq;
     } else if constexpr (which == 3) {
-      return out *= x2_y2 - tmp; // LoG
+	return out *= x2_y2 - tmp;// /= (sigma_sq * sigma_sq); // LoG
     }
     static_assert(which < 4);
   }
@@ -134,6 +125,14 @@ namespace vision {
 	output(i, j) = std::inner_product(local.begin(), local.end(), kernel.begin(), 0);
       }
     return output;
+  }
+
+  Image unsharp_mask(const Image& input, numpy::float64 k=9.0,
+		     numpy::float64 sigma=1.4, numpy::float64 truncate=4.0) {
+    auto low_pass = convolve(input, Gauss(sigma, truncate));
+    auto high_pass = input - low_pass;
+    auto out = input + k * high_pass;
+    return out;
   }
 
   struct gradient {

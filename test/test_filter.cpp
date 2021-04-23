@@ -1,28 +1,30 @@
-#include <vision/vision.hpp>
+#include <eyeball/eyeball.hpp>
 using namespace python;
 namespace np = numpy;
 
 int main() {
   try {
-    auto image = vision::sample::lena;
-    auto prewitt = vision::Prewitt(image);
-    auto center = vision::centered_diff(image);
-    auto gauss = vision::convolve(image, vision::Gauss(1.4));
-    // auto gauss_grad = vision::Gauss_gradient(image);
-    auto log = vision::convolve(image, vision::LoG(1.4));
+    auto image = eyeball::sample::lena;
+    auto prewitt = eyeball::Prewitt(image);
+    auto center = eyeball::centered_diff(image);
+    auto gauss = eyeball::convolve(image, eyeball::Gauss(1.4));
+    auto gauss_grad = eyeball::Gauss_gradient(image);
+    auto log = eyeball::convolve(image, eyeball::LoG(1.4));
+    auto sharp = eyeball::unsharp_mask(image, 4.0, 2.2);
     
-    vision::savetxt("images/lena.txt", image);
-    vision::savetxt("images/lena_prewitt_x.txt", prewitt.diff_x);
-    vision::savetxt("images/lena_prewitt_y.txt", prewitt.diff_y);
-    vision::savetxt("images/lena_prewitt_mag.txt", prewitt.magnitude);
-    vision::savetxt("images/lena_center_x.txt", center.diff_x);
-    vision::savetxt("images/lena_center_y.txt", center.diff_y);
-    vision::savetxt("images/lena_center_mag.txt", center.magnitude);
-    vision::savetxt("images/lena_gauss.txt", gauss);
-    // vision::savetxt("images/lena_gauss_grad_x.txt", gauss_grad.diff_x);
-    // vision::savetxt("images/lena_gauss_grad_y.txt", gauss_grad.diff_y);
-    // vision::savetxt("images/lena_gauss_grad_mag.txt", gauss_grad.magnitude);
-    vision::savetxt("images/lena_log.txt", log);
+    eyeball::savetxt("images/lena.txt", image);
+    eyeball::savetxt("images/lena_prewitt_x.txt", prewitt.diff_x);
+    eyeball::savetxt("images/lena_prewitt_y.txt", prewitt.diff_y);
+    eyeball::savetxt("images/lena_prewitt_mag.txt", prewitt.magnitude);
+    eyeball::savetxt("images/lena_center_x.txt", center.diff_x);
+    eyeball::savetxt("images/lena_center_y.txt", center.diff_y);
+    eyeball::savetxt("images/lena_center_mag.txt", center.magnitude);
+    eyeball::savetxt("images/lena_gauss.txt", gauss);
+    eyeball::savetxt("images/lena_gauss_grad_x.txt", gauss_grad.diff_x);
+    eyeball::savetxt("images/lena_gauss_grad_y.txt", gauss_grad.diff_y);
+    eyeball::savetxt("images/lena_gauss_grad_mag.txt", gauss_grad.magnitude);
+    eyeball::savetxt("images/lena_log.txt", log);
+    eyeball::savetxt("images/lena_sharp.txt", sharp);
   } catch(const std::exception& e) {
     print(e);
   }

@@ -1,4 +1,4 @@
 #pragma once
 
-#include <vision/lena.hpp>
-#include <vision/corner.hpp>
+#include <eyeball/lena.hpp>
+#include <eyeball/corner.hpp>
