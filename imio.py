@@ -1,3 +1,5 @@
+# ls images/*.txt | xargs -L 1 python imio.py to_image
+
 import re
 import sys
 import argparse
