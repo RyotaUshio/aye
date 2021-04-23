@@ -1,4 +1,7 @@
-# ls images/*.txt | xargs -L 1 python imio.py to_image
+#!/usr/bin/env python3
+
+# To convert all the .txt files in the ./images/ directory into JPEG images:
+#     ls images/*.txt | xargs -L 1 ./io to_image
 
 import re
 import sys
