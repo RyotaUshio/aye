@@ -4,7 +4,7 @@ namespace np = numpy;
 
 int main() {
   try {
-    auto image = eyeball::sample::lena;
+    auto image = eye::loadtxt("images/lena.txt"); // eyeball::sample::lena;
     auto prewitt = eyeball::Prewitt(image);
     auto center = eyeball::centered_diff(image);
     auto gauss = eyeball::convolve(image, eyeball::Gauss(1.4));
@@ -12,7 +12,7 @@ int main() {
     auto log = eyeball::convolve(image, eyeball::LoG(1.4));
     auto sharp = eyeball::unsharp_mask(image, 4.0, 2.2);
     
-    eyeball::savetxt("images/lena.txt", image);
+    // eyeball::savetxt("images/lena.txt", image);
     eyeball::savetxt("images/lena_prewitt_x.txt", prewitt.diff_x);
     eyeball::savetxt("images/lena_prewitt_y.txt", prewitt.diff_y);
     eyeball::savetxt("images/lena_prewitt_mag.txt", prewitt.magnitude);

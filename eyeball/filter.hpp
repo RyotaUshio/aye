@@ -149,9 +149,9 @@ namespace eyeball {
     return output;
   }
   
-  template <class Func, class... Args>
-  Image apply(const numpy::shape_type& shape, Func func, Args... args) {
-    auto output = numpy::empty(shape);
+  template <class Dtype=np::float_, class Func, class... Args>
+  np::ndarray<Dtype> apply(const np::shape_type& shape, Func func, Args... args) {
+    auto output = numpy::empty<Dtype>(shape);
     int i = 0; int j = -1;
     std::generate(output.begin(), output.end(),
     		  [&](){
