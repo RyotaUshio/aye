@@ -9,8 +9,6 @@
 
 namespace eyeball {
 
-  // Image imread(const std::string& filename) {}
-
   Image normalize(const Image& image) {
     auto max = numpy::max(image);
     auto min = numpy::min(image);
@@ -22,7 +20,13 @@ namespace eyeball {
 
   template <class... Args>
   void savetxt(const char* fname, const Image& image, Args... args) {
-    numpy::savetxt(fname, normalize(image), args...);
+    numpy::savetxt(fname, normalize(image),
+		   "%.18f", // fmt
+		   " ", // delimiter
+		   " ", // newline
+		   python::str(image.shape(0)) + " " + python::str(image.shape(1)) + "\n", // header
+		   "" // footer
+		   );
   }
 
   template <class... Args>
