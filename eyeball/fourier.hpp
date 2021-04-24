@@ -28,7 +28,7 @@ namespace eyeball {
 
 
   auto _fft1d_impl(const np::ndarray<np::complex_>& x,
-  		   const np::ndarray<np::complex_>& W)
+		   const np::ndarray<np::complex_>& W)
     -> np::ndarray<np::complex_> {
     /**
      * x : input signal of size N
@@ -68,14 +68,14 @@ namespace eyeball {
     auto x_ = x.template astype<np::complex_>();
     np::ndarray<np::complex_> W;
     if constexpr (inverse) {
-      W = _fft_rotation_factor(-N);
-    } else {
+	W = _fft_rotation_factor(-N);
+      } else {
       W = _fft_rotation_factor(N);
     }
     auto out = _fft1d_impl(x_, W);
     if constexpr (inverse) {
-      return out / N;
-    } else {
+	return out / N;
+      } else {
       return out;
     }	
   }
@@ -92,9 +92,10 @@ namespace eyeball {
     // .copy()を消すとおかしい動作をする。なぜ？
     return out;
   }
-  
-  np::ndarray<np::complex_> _fftshift_impl(const np::ndarray<np::complex_>& x) {
-    auto out = np::empty<np::complex_>(x.shape());
+
+  template <class Dtype>
+  np::ndarray<Dtype> _fftshift_impl(const np::ndarray<Dtype>& x) {
+    auto out = np::empty<Dtype>(x.shape());
     int size = out.shape(0);
 
     python::slice first_half(size / 2), second_half(size / 2, size);
@@ -103,7 +104,8 @@ namespace eyeball {
     return out;
   }
 
-  np::ndarray<np::complex_> fftshift(const np::ndarray<np::complex_>& x) {
+  template <class Dtype>
+  np::ndarray<Dtype> fftshift(const np::ndarray<Dtype>& x) {
     auto out = x.copy();
     for (int ax=0; ax<x.ndim(); ax++) {
       auto tmp = np::utils::bring_axis_to_head(out, ax);
@@ -121,4 +123,19 @@ namespace eyeball {
   inline auto ifft(const Array& x) -> np::ndarray<np::complex_> {
     return _fftnd<true, typename Array::dtype>(x);
   }
+
+  
+  struct Fourier {
+    const CImage result;
+
+    Fourier(const Image& input) : result(fft(input)) {}
+    Image amplitude() const {
+      auto dB = 20.0 * np::log10( np::abs(result) );
+      return fftshift(dB);
+    }
+    Image inv() const {
+      return np::real(ifft(result));
+    }
+  };
+  
 }
