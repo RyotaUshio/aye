@@ -1,10 +1,10 @@
 CXX = g++
 override CXXFLAGS += -std=c++17 -O3 -Wall -I ~/numerical/numpy -I .
-HEADER = $(wildcard ./vision/*.hpp)
+HEADER = $(wildcard ./eyeball/*.hpp)
 SRC = $(wildcard ./test/*.cpp)
 EXC = $(basename $(SRC))
 
-.PHONY: clean all run render open
+.PHONY: clean all run txt render open
 
 all: run
 

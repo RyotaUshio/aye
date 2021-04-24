@@ -63,9 +63,9 @@ namespace eyeball {
     if constexpr (which == 0) {
       return out;
     } else if constexpr (which == 1) {
-	return out *= x;// /= -sigma_sq;
+	return out *= x *= -1;// /= -sigma_sq;
     } else if constexpr (which == 2) {
-	return out *= y;// /= -sigma_sq;
+	return out *= y *= -1;// /= -sigma_sq;
     } else if constexpr (which == 3) {
 	return out *= x2_y2 - tmp;// /= (sigma_sq * sigma_sq); // LoG
     }
@@ -117,13 +117,47 @@ namespace eyeball {
     auto shape = image.shape();
     auto input = pad_zero(image, pad_size);
     auto output = numpy::empty(shape);
+    Image local;
 
-    for(int i=0; i<shape[0]; i++)
-      for(int j=0; j<shape[1]; j++) {
-	auto local = input(python::slice(i, i + 2 * pad_size + 1),
-			   python::slice(j, j + 2 * pad_size + 1));
-	output(i, j) = std::inner_product(local.begin(), local.end(), kernel.begin(), 0);
-      }
+    int i = 0;
+    int j = 0;
+    std::generate(output.begin(), output.end(),
+    		  [&](){
+    		    local = input(python::slice(i, i + 2 * pad_size + 1),
+				  python::slice(j, j + 2 * pad_size + 1));
+    		    j++; if (j == shape[1]) {j = 0; i++;}
+    		    return std::inner_product(local.begin(), local.end(), kernel.begin(), 0);
+    		  });
+    return output;
+  }
+
+  template <class Func, class... Args>
+  Image apply_local(const Image& image, int pad_size, Func func, Args... args) {
+    auto shape = image.shape();
+    Image input = pad_zero(image, pad_size);
+    Image output = numpy::empty(shape);
+    Image local;
+    
+    int i = 0; int j = -1;
+    std::generate(output.begin(), output.end(),
+    		  [&](){
+		    j++; if (j == shape[1]) {j = 0; i++;}
+    		    local = input(python::slice(i, i + 2 * pad_size + 1),
+				  python::slice(j, j + 2 * pad_size + 1));
+    		    return func(i, j, local, args...);
+    		  });
+    return output;
+  }
+  
+  template <class Func, class... Args>
+  Image apply(const numpy::shape_type& shape, Func func, Args... args) {
+    auto output = numpy::empty(shape);
+    int i = 0; int j = -1;
+    std::generate(output.begin(), output.end(),
+    		  [&](){
+    		    j++; if (j == shape[1]) {j = 0; i++;}
+    		    return func(i, j, args...);
+    		  });
     return output;
   }
 
@@ -149,6 +183,8 @@ namespace eyeball {
       : src(input), filter_x(filter_x_), filter_y(filter_y_), magnitude_order(order) {
       operator()();
     }
+
+    virtual ~gradient() {}
 
   private:
     void differentiate() {
