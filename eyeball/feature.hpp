@@ -46,7 +46,7 @@ namespace eyeball {
     numpy::float64 sigma;
     numpy::float64 th1;
     numpy::float64 th2;
-    gradient* grad;
+    Gradient* grad;
     Image maximum;
     Image edge;
     

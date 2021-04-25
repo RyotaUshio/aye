@@ -42,7 +42,6 @@ def image_to_txt(input_fname, output_fname=None, size=None, scale=None, upper_bo
 
 def txt_to_image(input_fname, output_fname=None):
     with open(input_fname) as f:
-        print(input_fname)
         shape = np.fromstring(f.readline(), dtype=int, sep=' ', )
         array = np.loadtxt(f).reshape(shape)
     image = Image.fromarray(array).convert('RGB')

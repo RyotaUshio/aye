@@ -4,6 +4,9 @@ HEADER = $(wildcard ./eyeball/*.hpp)
 SRC = $(wildcard ./test/*.cpp)
 EXC = $(basename $(SRC))
 
+TXT = $(wildcard ./images/*.txt)
+IMG = $(addsuffix .jpg, $(basename $(TXT)))
+
 .PHONY: clean all run txt render open
 
 all: run
@@ -11,11 +14,11 @@ all: run
 %: %.cpp $(HEADER)
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-run: $(EXC)
-	for name in $(EXC); do $$name; done
+render: $(IMG)
+# @ls $^ | xargs -L 1 ./io to_image
 
-render: images/*.txt
-	@ls $^ | xargs -L 1 ./io to_image
+%.jpg: %.txt
+	./io to_image $< -o $@
 
 open:
 	open ./images/*.jpg

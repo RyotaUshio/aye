@@ -9,12 +9,12 @@
 
 namespace eyeball {
 
-  Image normalize(const Image& image) {
+  Image normalize(const Image& image, Image::dtype upper_bound=255.0) {
     auto max = numpy::max(image);
     auto min = numpy::min(image);
     auto out = image.copy();
     out -= min;
-    out *= 255.0 / (max - min);
+    out *= upper_bound / (max - min);
     return out;
   }
 
