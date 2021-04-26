@@ -2,7 +2,7 @@
 
 Image processing & computer vision library for C++, based on [NumPy-in-C++](https://github.com/RyotaUshio/numpy-in-cpp.git).
 
-## Requirement
+## Requirements
 
 - C++17 or later
 - [NumPy-in-C++](https://github.com/RyotaUshio/numpy-in-cpp.git)
