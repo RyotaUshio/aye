@@ -9,7 +9,7 @@ Image processing & computer vision library for C++, based on [NumPy-in-C++](http
 
 ## Contents
 
-- Convolutinal filtering
+- Convolutional filtering
 - Fast fourier transform and frequency filtering
 - Feature detection & description
   - Harris's corner detection
