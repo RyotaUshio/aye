@@ -88,10 +88,46 @@ namespace eyeball {
     return _Gaussian_filters<3>(sigma, truncate);
   }
 
-  template <class Array>
-  Array pad_zero(const Array& image, np::size_type pad_size) {
+  enum PadMode {constant, nearest};
+  
+  template <PadMode mode, class Array>
+  void pad_inplace_1d(Array&& input, np::size_type pad_size, typename Array::dtype fill_value) {
+    using python::slice;
+    slice head(pad_size);
+    slice tail(-pad_size, input.size());
+    
+    if constexpr (mode == constant) {
+	input(head) = fill_value;
+	input(tail) = fill_value;
+      } else { // mode == nearest
+	input(head) = input(pad_size);
+	input(tail) = input(-pad_size-1);
+      }
+  }
+
+  template <PadMode mode, class Array>
+  Array pad(const Array& input, np::size_type pad_size, typename Array::dtype fill_value=0) {
+    Array out = np::empty<typename Array::dtype>({input.shape(0) + pad_size * 2,
+						  input.shape(1) + pad_size * 2});
+    python::slice center(pad_size, -pad_size);
+    out(center, center) = input;
+    
+    for(int row=pad_size; row<input.shape(0)+pad_size; row++) 
+      pad_inplace_1d<mode>(out(row), pad_size, fill_value);
+
+    for(np::axis_type ax=1; ax<input.ndim(); ax++) {
+      auto tmp = np::utils::bring_axis_to_head(out, ax);
+      for(int i=0; i<tmp.shape(0); i++) 
+	pad_inplace_1d<mode>(tmp(i), pad_size, fill_value);
+    }
+    
+    return out;
+  }
+
+  template <class Array, class PadFunc>
+  Array pad_apply(const Array& image, np::size_type pad_size, PadFunc func) {
     Array out = np::empty<typename Array::dtype>({image.shape(0) + pad_size * 2,
-					 image.shape(1) + pad_size * 2});
+						  image.shape(1) + pad_size * 2});
     auto hi = image.shape(0); // height of the input image
     auto wid = image.shape(1); // width of the input image
     auto hi_out = out.shape(0); // height of the output image
@@ -100,15 +136,48 @@ namespace eyeball {
     if ((hi + pad_size *2 != hi_out) or (wid + pad_size * 2 != wid_out))
       throw std::invalid_argument("pad_zero(): Input & output images have imcompatible size.");
 
-    auto slice = python::slice(pad_size, -pad_size);
-    out(python::slice(pad_size)) = 0.0;
-    out(python::slice(-pad_size, hi_out)) = 0.0;
-    out(slice, python::slice(pad_size)) = 0.0;
-    out(slice, python::slice(-pad_size, wid_out)) = 0.0;
-    out(slice, slice) = image;
+    using python::slice;
+    slice center(pad_size, -pad_size);
+    slice head(pad_size);
+    slice tail_h(-pad_size, hi_out);
+    slice tail_w(-pad_size, wid_out);
+    out(center, center) = image;
+    
+    out(head) = func(image(head));     // top
+    out(tail_h) = func(image(tail_h)); // bottom
+    out(":", head) = func(image(":", head));     // left
+    out(":", tail_w) = func(image(":", tail_w)); // right
 
     return out;
   }
+  
+  template <class Array>
+  Array pad_zero(const Array& image, np::size_type pad_size) {
+    return pad_apply(image, pad_size, [](auto x) -> typename decltype(x)::dtype {return 0;});
+  }
+
+  
+  template <class Array>
+  Array pad_nearest(const Array& image, np::size_type pad_size) {
+    return pad_apply(image, pad_size,
+		     [pad_size](auto x) -> decltype(x) {
+		       decltype(x) out;
+		       auto H = x.shape(0);
+		       auto W = x.shape(1);
+		       if (H < W) {
+		       	 out = np::empty<typename decltype(x)::dtype>({H, W + pad_size * 2});
+			 out(":", python::slice(pad_size, -pad_size)) = x;
+		       }
+		       else {
+		       	 out = np::empty<typename decltype(x)::dtype>({H + pad_size * 2, W});
+			 out(python::slice(pad_size, -pad_size)) = x;
+		       }
+		       return out;
+		     });
+  }
+
+
+
   
   Image convolve(const Image& image, const Kernel& kernel) {
     np::size_type pad_size = kernel.shape(0) / 2;
@@ -247,50 +316,5 @@ namespace eyeball {
     GaussGradient(const Image& input, np::float64 sigma=1.4, np::float64 truncate=4.0, int order=2)
       : Gradient(input, Gauss_deriv_x(sigma, truncate), Gauss_deriv_y(sigma, truncate), order) {}
   };
-
-  // template <const Kernel& filter_x, const Kernel& filter_y>
-  // struct gradient {
-  //   const Image& src;
-  //   int magnitude_order;
-  //   Image diff_x;
-  //   Image diff_y;
-  //   Image magnitude;
-  //   Image direction;
-
-  //   gradient(const Image& input, int order=2)
-  //     : src(input), magnitude_order(order) {
-  //     operator()();
-  //   }
-
-  // private:
-  //   void differentiate() {
-  //     diff_x = convolve(src, filter_x);
-  //     diff_y = convolve(src, filter_y);
-  //   }
-
-  //   void set_magnitude() {
-  //     if (magnitude_order == 1)
-  // 	magnitude = np::fabs(diff_x) + np::fabs(diff_y);
-  //     else if (magnitude_order == 2)
-  // 	magnitude = np::sqrt(diff_x * diff_x + diff_y * diff_y);
-  //   }
-
-  //   void set_direction() {
-  //     direction = np::arctan2(diff_y, diff_x);
-  //   }
-
-  //   void operator()() {
-  //     differentiate();
-  //     set_magnitude();
-  //     set_direction();
-  //   }
-  // };
-
-  
-  // using forward_diff = gradient<forward_diff_x, forward_diff_y>;
-  // using backward_diff = gradient<backward_diff_x, backward_diff_y>;
-  // using centered_diff = gradient<centered_diff_x, centered_diff_y>;
-  // using Prewitt = gradient<Prewitt_x, Prewitt_y>;
-  // using Sobel = gradient<Sobel_x, Sobel_y>;
 
 }
