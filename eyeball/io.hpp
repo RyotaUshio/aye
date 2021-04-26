@@ -9,7 +9,8 @@
 
 namespace eyeball {
 
-  Image normalize(const Image& image, Image::dtype upper_bound=255.0) {
+  template <class Array>
+  Array normalize(const Array& image, typename Array::dtype upper_bound=255) {
     auto max = numpy::max(image);
     auto min = numpy::min(image);
     auto out = image.copy();
@@ -18,10 +19,10 @@ namespace eyeball {
     return out;
   }
 
-  template <class... Args>
-  void savetxt(const char* fname, const Image& image, Args... args) {
+  template <class Array, class... Args>
+  void savetxt(const char* fname, const Array& image, Args... args) {
     numpy::savetxt(fname, normalize(image),
-		   "%.18f", // fmt
+		   //"%.18f", // fmt
 		   " ", // delimiter
 		   " ", // newline
 		   python::str(image.shape(0)) + " " + python::str(image.shape(1)) + "\n", // header

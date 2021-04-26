@@ -7,7 +7,8 @@
 namespace eyeball {
 
   using Label = int;
-  using BinImage = np::ndarray<int>;
+  using Binary = int;
+  using BinImage = np::ndarray<Binary>;
   using LabelImage = np::ndarray<Label>;
 
   using python::print;
@@ -18,15 +19,17 @@ namespace eyeball {
   template <Connectivity connectivity> struct ConnectedComponent;
   using ConnectedComponent4 = struct ConnectedComponent<FOUR>;
   using ConnectedComponent8 = struct ConnectedComponent<EIGHT>;
-  
-  template <Connectivity connectivity>
-  struct ConnectedComponent {
 
+  namespace {
     using Vertex = algorithm::Vertex<Label, Label>;
     using Vertices = std::vector<Vertex>;
     using Edge = algorithm::Edge<Label, Label>;
     using Edges = std::set<Edge>;
     using Graph = algorithm::UndirectedGraph<Label, Label>;
+  }
+  
+  template <Connectivity connectivity>
+  struct ConnectedComponent {
 
     std::set< std::pair<Label, Label> > lookup;
     Vertices vertices;
@@ -35,13 +38,10 @@ namespace eyeball {
     LabelImage label;
     int n_label;
 
+    ConnectedComponent() = default;
     ConnectedComponent(const BinImage& input) {
       _set_temp_labels(input);
-      print("temporary label:");
-      print(label);
       _reset_labels();
-      print("final label:");
-      print(label);
     }
 
     BinImage::iterator _find_black(BinImage::iterator first, BinImage::iterator last) {
@@ -57,12 +57,12 @@ namespace eyeball {
       return itr;
     }
 
-    void update_lookup(LabelImage::iterator target_label, Label another_label) {
+    void _update_lookup(LabelImage::iterator target_label, Label another_label) {
       if (another_label and another_label != *target_label)
 	lookup.insert(std::minmax(another_label, *target_label));
     }
     
-    void update_lookup(LabelImage::iterator target_label,
+    void _update_lookup(LabelImage::iterator target_label,
 		       Label above_right, Label right) {
       if (above_right and above_right != *target_label and !right)
 	lookup.insert(std::minmax(above_right, *target_label));
@@ -73,7 +73,7 @@ namespace eyeball {
 			       Label above, Label left) {
       if (above) {
 	*target_label = above;
-	update_lookup(target_label, left);
+	_update_lookup(target_label, left);
       }
       else {
 	if (left)
@@ -94,12 +94,12 @@ namespace eyeball {
       if (above_left or above) {
 	if (above_left) {
 	  *target_label = above_left;
-	  update_lookup(target_label, above);
-	  update_lookup(target_label, above_right, right);
+	  _update_lookup(target_label, above);
+	  _update_lookup(target_label, above_right, right);
 	} else {
 	  *target_label = above;
 	}
-	update_lookup(target_label, left);
+	_update_lookup(target_label, left);
 	
       } else {
 	if (left)
@@ -158,8 +158,9 @@ namespace eyeball {
 
       // make graph
       graph = Graph::from_edges(E);
+      // graph = Graph(E);
     }
-    
+
     void _reset_labels() {
       _make_graph();
       graph.connected_components();

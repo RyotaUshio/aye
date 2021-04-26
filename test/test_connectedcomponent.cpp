@@ -1,4 +1,5 @@
 #include <eyeball/eyeball.hpp>
+#include <utility>
 using namespace python;
 
 int main() {
@@ -15,16 +16,15 @@ int main() {
 			 0, 0, 1, 1, 1, 1, 0, 0, 0,
 			 0, 0, 0, 0, 0, 0, 0, 0, 0}, {11, 9});
 
+    using namespace eye::algorithm;
+
     eye::ConnectedComponent4 result4(input);
-    // print(input);
-    // print(result4.label);
-    // print(result4.lookup);
+    print(input);
+    print(result4.label);
     
     eye::ConnectedComponent8 result8(input);
-    // print(input);
-    // print(result8.label);
-    // print(result8.lookup);
-    // print(result8.graph.vertices());
+    print(input);
+    print(result8.label);
 
   } catch (const std::exception& e) {
     print(e);

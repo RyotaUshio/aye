@@ -63,11 +63,11 @@ namespace eyeball {
     if constexpr (which == 0) {
       return out;
     } else if constexpr (which == 1) {
-	return out *= x *= -1;// /= -sigma_sq;
+	return out *= x *= -sigma_sq;
     } else if constexpr (which == 2) {
-	return out *= y *= -1;// /= -sigma_sq;
+	return out *= y *= -sigma_sq;
     } else if constexpr (which == 3) {
-	return out *= x2_y2 - tmp;// /= (sigma_sq * sigma_sq); // LoG
+	return out *= x2_y2 - tmp /= (sigma_sq * sigma_sq); // LoG
     }
     static_assert(which < 4);
   }
@@ -91,7 +91,7 @@ namespace eyeball {
   enum PadMode {constant, nearest};
   
   template <PadMode mode, class Array>
-  void pad_inplace_1d(Array&& input, np::size_type pad_size, typename Array::dtype fill_value) {
+  void _pad_inplace_1d(Array&& input, np::size_type pad_size, typename Array::dtype fill_value) {
     using python::slice;
     slice head(pad_size);
     slice tail(-pad_size, input.size());
@@ -113,76 +113,32 @@ namespace eyeball {
     out(center, center) = input;
     
     for(int row=pad_size; row<input.shape(0)+pad_size; row++) 
-      pad_inplace_1d<mode>(out(row), pad_size, fill_value);
+      _pad_inplace_1d<mode>(out(row), pad_size, fill_value);
 
     for(np::axis_type ax=1; ax<input.ndim(); ax++) {
       auto tmp = np::utils::bring_axis_to_head(out, ax);
       for(int i=0; i<tmp.shape(0); i++) 
-	pad_inplace_1d<mode>(tmp(i), pad_size, fill_value);
+	_pad_inplace_1d<mode>(tmp(i), pad_size, fill_value);
     }
     
     return out;
   }
 
-  template <class Array, class PadFunc>
-  Array pad_apply(const Array& image, np::size_type pad_size, PadFunc func) {
-    Array out = np::empty<typename Array::dtype>({image.shape(0) + pad_size * 2,
-						  image.shape(1) + pad_size * 2});
-    auto hi = image.shape(0); // height of the input image
-    auto wid = image.shape(1); // width of the input image
-    auto hi_out = out.shape(0); // height of the output image
-    auto wid_out = out.shape(1); // width of the output image
-
-    if ((hi + pad_size *2 != hi_out) or (wid + pad_size * 2 != wid_out))
-      throw std::invalid_argument("pad_zero(): Input & output images have imcompatible size.");
-
-    using python::slice;
-    slice center(pad_size, -pad_size);
-    slice head(pad_size);
-    slice tail_h(-pad_size, hi_out);
-    slice tail_w(-pad_size, wid_out);
-    out(center, center) = image;
-    
-    out(head) = func(image(head));     // top
-    out(tail_h) = func(image(tail_h)); // bottom
-    out(":", head) = func(image(":", head));     // left
-    out(":", tail_w) = func(image(":", tail_w)); // right
-
-    return out;
-  }
-  
   template <class Array>
   Array pad_zero(const Array& image, np::size_type pad_size) {
-    return pad_apply(image, pad_size, [](auto x) -> typename decltype(x)::dtype {return 0;});
+    return pad<constant>(image, pad_size, 0);
   }
-
   
   template <class Array>
   Array pad_nearest(const Array& image, np::size_type pad_size) {
-    return pad_apply(image, pad_size,
-		     [pad_size](auto x) -> decltype(x) {
-		       decltype(x) out;
-		       auto H = x.shape(0);
-		       auto W = x.shape(1);
-		       if (H < W) {
-		       	 out = np::empty<typename decltype(x)::dtype>({H, W + pad_size * 2});
-			 out(":", python::slice(pad_size, -pad_size)) = x;
-		       }
-		       else {
-		       	 out = np::empty<typename decltype(x)::dtype>({H + pad_size * 2, W});
-			 out(python::slice(pad_size, -pad_size)) = x;
-		       }
-		       return out;
-		     });
+    return pad<nearest>(image, pad_size);
   }
 
-
-
-  
+  template <PadMode mode=nearest>
   Image convolve(const Image& image, const Kernel& kernel) {
     np::size_type pad_size = kernel.shape(0) / 2;
     auto shape = image.shape();
-    auto input = pad_zero(image, pad_size);
+    auto input = pad<mode>(image, pad_size);
     auto output = np::empty(shape);
     Image local;
 
@@ -198,10 +154,10 @@ namespace eyeball {
     return output;
   }
 
-  template <class Func, class... Args>
+  template <PadMode mode=nearest, class Func, class... Args>
   Image apply_local(const Image& image, int pad_size, Func func, Args... args) {
     auto shape = image.shape();
-    Image input = pad_zero(image, pad_size);
+    Image input = pad<mode>(image, pad_size);
     Image output = np::empty(shape);
     Image local;
     

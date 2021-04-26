@@ -6,6 +6,7 @@ int main(int argc, const char** argv) {
     auto y = np::indices({5, 5})(0);
     print(y);
     print(eye::fft(y));
+    print(np::real(eye::ifft(eye::fft(y))));
     
     auto image = eye::imread(argc, argv, 4);
     auto fft = eye::Fourier(image);

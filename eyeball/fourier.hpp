@@ -20,13 +20,13 @@ namespace eyeball {
      *  N > 0 corresponds to FFT, and N < 0 IFFT.
      */
     double coef = 2.0 * np::pi / static_cast<double>(N);
-    return apply<np::complex_>({N, N},
+    return apply<np::complex_>({std::abs(N), std::abs(N)},
 			       [coef](int i, int j) {
 				 return np::complex_(std::cos(coef*i*j), -std::sin(coef*i*j));
 			       });
   }
 
-
+  template <bool inverse>
   auto _fft1d_impl(const np::ndarray<np::complex_>& x,
 		   const np::ndarray<np::complex_>& W)
     -> np::ndarray<np::complex_> {
@@ -48,15 +48,20 @@ namespace eyeball {
       auto g = x(python::slice(0, N, 2)); // even-numbered part of the input
       auto h = x(python::slice(1, N + 1, 2)); // odd-numbered part of the input
       auto w = W("::2"); // W = W_N^k (k = 0, 1, ..., N/2) -> w = W_{N/2}^k (k = 0, 1, ..., N/4)
-      auto G = _fft1d_impl(g, w); // FFT of even-numbered part
-      auto H = _fft1d_impl(h, w); // FFT of odd-numbered part
+      auto G = _fft1d_impl<inverse>(g, w); // FFT of even-numbered part
+      auto H = _fft1d_impl<inverse>(h, w); // FFT of odd-numbered part
      
       out(python::slice(0, N / 2)) = G + W * H; // 1st half of the output
       out(python::slice(N / 2, N)) = G - W * H; // 2nd half of the output
 
     } else {
       // naive DFT
-      return np::matmul(dft_matrix(N), x);
+      if constexpr (inverse) {
+	return np::matmul(dft_matrix(-N), x);
+      }
+      else {
+	return np::matmul(dft_matrix(N), x);
+      }
     }
 
     return out;
@@ -72,7 +77,7 @@ namespace eyeball {
       } else {
       W = _fft_rotation_factor(N);
     }
-    auto out = _fft1d_impl(x_, W);
+    auto out = _fft1d_impl<inverse>(x_, W);
     if constexpr (inverse) {
 	return out / N;
       } else {
