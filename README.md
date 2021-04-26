@@ -14,7 +14,7 @@ Image processing & computer vision library for C++, based on [NumPy-in-C++](http
 - Feature detection & description
   - Harris's corner detection
   - Canny's edge detection
-  - (SIFT: comming soon!)
+  - (SIFT: coming soon!)
 - Binary image processing
   - Connected components labeling
 - Basic algorithms & data structures for general purposes
