@@ -4,8 +4,8 @@ Image processing & computer vision library for C++, based on [NumPy-in-C++](http
 
 ## Requirement
 
-- c++17 or later
-- https://github.com/RyotaUshio/numpy-in-cpp.git
+- C++17 or later
+- [NumPy-in-C++](https://github.com/RyotaUshio/numpy-in-cpp.git)
 
 ## Contents
 
@@ -17,6 +17,6 @@ Image processing & computer vision library for C++, based on [NumPy-in-C++](http
   - (SIFT: comming soon!)
 - Binary image processing
   - Connected components labeling
-- Basic algorithms & data structures for general purpose
+- Basic algorithms & data structures for general purposes
   - Graphs
 - File I/O powered by Python
