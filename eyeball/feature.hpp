@@ -88,15 +88,13 @@ namespace eyeball {
       auto shape = may_be_edge.shape();
       auto M = shape[0];
       auto N = shape[1];
-      Label label;
       int key = 0;
-      int i, j;
       
-      for (i=0; i<M; i++)
-	for (j=0; j<N; j++) {
+      for (int i=0; i<M; i++)
+	for (int j=0; j<N; j++) {
 	  if (may_be_edge[{i, j}]) { // pixel value > th_low
 	    bool is_strong = strong_edge[{i, j}];
-	    label = is_strong ? 1 : 0;
+	    Label label = is_strong ? 1 : 0;
 	    np::coord_type coord{i, j};
 	    vertices.emplace(coord,			     
 			     Vertex(key++, label));
@@ -110,13 +108,13 @@ namespace eyeball {
 
     Graph::AdjList make_adj_list() {
       Graph::AdjList list;
-      int i, j, m, n;
+      
       for(const auto& k_v : vertices) {
-	i = k_v.first[0];
-	j = k_v.first[1];
+	int i = k_v.first[0];
+	int j = k_v.first[1];
 	const Vertex& v = k_v.second;
-	for (m=-1; m<=1; m++)
-	  for (n=-1; n<=1; n++) {
+	for (int m=-1; m<=1; m++)
+	  for (int n=-1; n<=1; n++) {
 	    if (m == n == 0)
 	      continue;
 	    try {

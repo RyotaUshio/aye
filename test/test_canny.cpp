@@ -26,7 +26,9 @@ int main(int argc, const char** argv) {
     eye::savetxt(("images/canny_"+name+"_local_max.txt").c_str(),
 		 canny.local_max);
 
-    eye::savetxt(("images/canny_"+name+"_result.txt").c_str(), canny.result());
+    eye::savetxt(("images/canny_"+name+"_result.txt").c_str(), 1 - canny.result());
+
+    eye::imshow(1 - canny.result());
     
   } catch (const std::exception& e) {
     print(e);

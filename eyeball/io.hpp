@@ -44,4 +44,12 @@ namespace eyeball {
     return loadtxt(argv[1], args...);
   }
 
+  template <class Array, class... Args>
+  void imshow(const Array& image) {
+    std::string filename = "__eyeball_imshow__";
+    savetxt<Array>(filename.c_str(), image);
+    std::system(("./io imshow " + filename).c_str());
+    std::system(("rm " + filename).c_str());
+  }
+
 }

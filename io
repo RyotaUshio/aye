@@ -3,8 +3,11 @@
 import re
 import sys
 import argparse
-import numpy as np
 from PIL import Image
+
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 def suffix(filename, suffix):
     if not suffix.startswith('.'):
@@ -18,6 +21,12 @@ def upper_bound_to_scale(input_size:tuple, upper_bound:int):
 
 def rescale(image, scale):
     return image.resize((np.asarray(image.size) * scale).astype(int))
+
+def txt_to_array(filename):
+    with open(filename) as f:
+        shape = np.fromstring(f.readline(), dtype=int, sep=' ')
+        array = np.loadtxt(f).reshape(shape)
+    return array
 
 def image_to_txt(input_fname, output_fname=None, size=None, scale=None, upper_bound=None):
     with Image.open(input_fname) as image:
@@ -38,17 +47,22 @@ def image_to_txt(input_fname, output_fname=None, size=None, scale=None, upper_bo
             content = f.read()
             f.seek(0)
             f.write(f"{image.size[0]} {image.size[1]}\n" + content)
-        
 
 def txt_to_image(input_fname, output_fname=None):
-    with open(input_fname) as f:
-        shape = np.fromstring(f.readline(), dtype=int, sep=' ', )
-        array = np.loadtxt(f).reshape(shape)
-    image = Image.fromarray(array).convert('RGB')
     if output_fname is None:
         output_fname = suffix(input_fname, '.jpg')
+    image = Image.fromarray(txt_to_array(input_fname)).convert('RGB')
     image.save(output_fname)
     
+
+def imshow(filename):
+    image = txt_to_array(filename)
+    plt.imshow(image, cmap='gray')
+    plt.gca().xaxis.set_visible(False)
+    plt.gca().yaxis.set_visible(False)
+    plt.show()
+
+        
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Image I/O')
@@ -64,3 +78,5 @@ if __name__ == '__main__':
         image_to_txt(args.input_filename, args.output_filename, size=args.size, scale=args.scale, upper_bound=args.upper_bound)
     elif args.subcommand == 'to_image':
         txt_to_image(args.input_filename, args.output_filename)
+    elif args.subcommand in ['show', 'imshow']:
+        imshow(args.input_filename)

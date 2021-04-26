@@ -215,7 +215,7 @@ namespace eyeball {
     	return out;
       }
 
-      static Vertices_t adj_to_v(const Vertex_t* v, const Edges_t& edges) {
+     static Vertices_t adj_to_v(const Vertex_t* v, const Edges_t& edges) {
       	Vertices_t adj;
       	for (auto& e : edges) {
       	  if (&(e.first) == v)

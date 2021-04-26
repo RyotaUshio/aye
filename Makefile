@@ -4,8 +4,9 @@ HEADER = $(wildcard ./eyeball/*.hpp)
 SRC = $(wildcard ./test/*.cpp)
 EXC = $(basename $(SRC))
 
+FMT = .bmp
 TXT = $(wildcard ./images/*.txt)
-IMG = $(addsuffix .jpg, $(basename $(TXT)))
+IMG = $(addsuffix $(FMT), $(basename $(TXT)))
 
 .PHONY: clean all run txt render open
 
@@ -17,11 +18,11 @@ all: run
 render: $(IMG)
 # @ls $^ | xargs -L 1 ./io to_image
 
-%.jpg: %.txt
+%$(FMT): %.txt
 	./io to_image $< -o $@
 
 open:
-	open ./images/*.jpg
+	open ./images/*$(FMT)
 
 clean:
 	rm $(EXC)
