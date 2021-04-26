@@ -7,3 +7,4 @@
 *.o
 *#*
 __pycache__
+images/*.txt
