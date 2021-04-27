@@ -23,5 +23,5 @@ Image processing & computer vision library for C++, based on [NumPy-in-C++](http
   - Graphs
 - (Machine learning models: coming soon!)
 - File I/O powered by Python
-  - C++ functions for read/write (`savetxt()`, `loadtxt()`, `savefig()`) and displaying (`imshow()`)
+  - C++ functions for read/write (`savetxt()`, `loadtxt()`, `savefig()`) and displaying images (`imshow()`)
   - command line tools (`io to_txt`, `io to_image`, `io imshow`)
