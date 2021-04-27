@@ -52,4 +52,12 @@ namespace eyeball {
     std::system(("rm " + filename).c_str());
   }
 
+  template <class Array, class... Args>
+  void savefig(const std::string& fname, const Array& image, Args... args) {
+    std::string tmpfile = "__eyeball_savefig__";
+    savetxt<Array>(tmpfile.c_str(), image);
+    std::system(("./io to_image " + tmpfile + " -o " + fname).c_str());
+    std::system(("rm " + tmpfile).c_str());
+  }
+  
 }
