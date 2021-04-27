@@ -176,13 +176,17 @@ namespace eyeball {
 			       });
   }
 
-  np::ndarray<np::complex_> _idct_restore_removed(const np::ndarray<np::complex_>& x) {
-    auto out = np::empty<np::complex_>({x.size() * 2});
-    out(python::slice(x.size())) = x;
-    out(x.size()) = np::complex_(0, 0);
-    auto it=out.end()-1;
-    auto it_x=x.begin()+1;
-    for(; it_x!=x.end(); it-=1, it_x++) {
+  template <class Dtype>
+  np::ndarray<np::complex_> _idct_restore_fft(const np::ndarray<Dtype>& x) {
+    auto N = x.size();
+    auto first_half = x * _dct_half_shift(-N);
+    first_half(0) *= np::complex_(std::sqrt(2.0), 0);
+    auto out = np::empty<np::complex_>({2 * N});
+    out(python::slice(N)) = first_half;
+    out(N) = np::complex_(0, 0);
+    auto it = out.end() - 1;
+    auto it_x = first_half.begin() + 1;
+    for(; it_x!=first_half.end(); it-=1, it_x++) {
       *it = std::conj(*it_x);
     }
     return out;
@@ -196,13 +200,13 @@ namespace eyeball {
     auto head = fft(python::slice(x.size()));
     head *= _dct_half_shift(x.size());
     // 直交化のために X0 の項のみ 2−1/2 倍されている場合もある
-    //    head(0) /= np::complex_(std::sqrt(2.0), 0);
+    head(0) /= np::complex_(std::sqrt(2.0), 0);
     return np::real(head);
   }
 
   template <class Dtype>
   np::ndarray<np::float_> _idct1d(const np::ndarray<Dtype>& x) {
-    auto ifft = _fft1d<true>(_idct_restore_removed(x * _dct_half_shift(-x.size())));
+    auto ifft = _fft1d<true>(_idct_restore_fft(x));
     auto ifft_real = np::real(ifft);
     // 折り返された偶関数を元に戻す
     return ifft_real(python::slice(x.size()));

@@ -7,8 +7,8 @@ int main(int argc, const char** argv) {
     
     auto dct = eye::dct(image);
     auto idct = eye::idct(dct);
-    eye::savetxt(argv[2], dct);
-    eye::savetxt(argv[3], idct);
+    eye::savefig(argv[2], dct);
+    eye::savefig(argv[3], idct);
     
   } catch (const std::exception& e) {
     print(e);
