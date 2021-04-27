@@ -10,7 +10,7 @@ Image processing & computer vision library for C++, based on [NumPy-in-C++](http
 ## Contents
 
 - Convolutional filtering
-- Fast fourier transform (FFT) and frequency filtering
+- The fast fourier transform (FFT) and frequency filtering
 - Sparse representation with the discrete cosine transform (DCT)
 - Feature detection & description
   - Harris's corner detection
