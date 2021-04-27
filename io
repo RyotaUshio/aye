@@ -60,7 +60,7 @@ def imshow(filename):
     plt.imshow(image, cmap='gray')
     plt.gca().xaxis.set_visible(False)
     plt.gca().yaxis.set_visible(False)
-    plt.show()
+    plt.plot()
 
         
 if __name__ == '__main__':

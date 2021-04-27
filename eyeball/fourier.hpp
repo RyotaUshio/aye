@@ -92,7 +92,7 @@ namespace eyeball {
     for(int ax=0; ax<x.ndim(); ax++) {
       auto tmp = np::utils::bring_axis_to_head(out, ax);
       for(int k=0; k<x.shape(0); k++)
-	tmp(k) = _fft1d<inverse>(tmp(k).copy());
+  	tmp(k) = _fft1d<inverse>(tmp(k).copy());
     }
     // .copy()を消すとおかしい動作をする。なぜ？
     return out;
@@ -134,13 +134,108 @@ namespace eyeball {
     const CImage result;
 
     Fourier(const Image& input) : result(fft(input)) {}
+    
     Image amplitude() const {
       auto dB = 20.0 * np::log10( np::abs(result) );
       return fftshift(dB);
     }
+    
     Image inv() const {
       return np::real(ifft(result));
     }
   };
+
+  using FFT = Fourier;
+
+
+  template <class Dtype>
+  np::ndarray<np::float_> _make_evensym(const np::ndarray<Dtype>& x) {
+    auto out = np::zeros({x.size() * 2});
+    auto it_head = out.begin();
+    auto it_tail = out.end() - 1;
+    auto it_x = x.begin();
+    auto end = x.end();
+    while (it_x != end) {
+      *it_head = *it_tail = *it_x;
+      it_head++;
+      it_tail-= 1;
+      it_x++;
+    }
+    assert(it_head == it_tail + 1);
+    return out;
+  }
   
+  np::ndarray<np::complex_> _dct_half_shift(np::size_type N) {
+    /**
+     *  N > 0 corresponds to FFT, and N < 0 IFFT.
+     */
+    double coef = np::pi / (2.0 * static_cast<double>(N));
+    return apply<np::complex_>({std::abs(N)},
+			       [coef](int _, int k) {
+				 return np::complex_(std::cos(coef*k), -std::sin(coef*k));
+			       });
+  }
+
+  np::ndarray<np::complex_> _idct_restore_removed(const np::ndarray<np::complex_>& x) {
+    auto out = np::empty<np::complex_>({x.size() * 2});
+    out(python::slice(x.size())) = x;
+    out(x.size()) = np::complex_(0, 0);
+    auto it=out.end()-1;
+    auto it_x=x.begin()+1;
+    for(; it_x!=x.end(); it-=1, it_x++) {
+      *it = std::conj(*it_x);
+    }
+    return out;
+  }
+
+  template <class Dtype>
+  np::ndarray<np::float_> _dct1d(const np::ndarray<Dtype>& x) {
+    // xを折り返して偶関数にする
+    auto even = _make_evensym(x);
+    auto fft = _fft1d<false>(even);
+    auto head = fft(python::slice(x.size()));
+    head *= _dct_half_shift(x.size());
+    // 直交化のために X0 の項のみ 2−1/2 倍されている場合もある
+    //    head(0) /= np::complex_(std::sqrt(2.0), 0);
+    return np::real(head);
+  }
+
+  template <class Dtype>
+  np::ndarray<np::float_> _idct1d(const np::ndarray<Dtype>& x) {
+    auto ifft = _fft1d<true>(_idct_restore_removed(x * _dct_half_shift(-x.size())));
+    auto ifft_real = np::real(ifft);
+    // 折り返された偶関数を元に戻す
+    return ifft_real(python::slice(x.size()));
+    
+    // 直交化のために X0 の項のみ 2−1/2 倍されている場合もある
+    //    head(0) /= np::complex_(std::sqrt(2.0), 0);
+    // return np::real(head);
+  }  
+
+  template <bool inverse, class Dtype>
+  np::ndarray<np::float_> _dctnd(const np::ndarray<Dtype>& x) {
+    auto out = x.template astype<np::float_>();
+    
+    for(int ax=0; ax<x.ndim(); ax++) {
+      auto tmp = np::utils::bring_axis_to_head(out, ax);
+      for(int k=0; k<x.shape(0); k++) {
+	if constexpr (inverse) {
+	  tmp(k) = _idct1d(tmp(k).copy());
+	} else {
+  	tmp(k) = _dct1d(tmp(k).copy());
+	}
+      }
+    }
+    return out;
+  }
+
+  template <class Array>
+  inline auto dct(const Array& x) -> np::ndarray<np::float_> {
+    return _dctnd<false, typename Array::dtype>(x);
+  }
+
+  template <class Array>
+  inline auto idct(const Array& x) -> np::ndarray<np::float_> {
+    return _dctnd<true, typename Array::dtype>(x);
+  }
 }

@@ -3,12 +3,16 @@ using namespace python;
 
 int main(int argc, const char** argv) {
   try {
+    // the same example as
+    // https://docs.scipy.org/doc/scipy/reference/generated/scipy.fft.fft2.html
     auto y = np::indices({5, 5})(0);
     print(y);
     print(eye::fft(y));
     print(np::real(eye::ifft(eye::fft(y))));
     
     auto image = eye::imread(argc, argv, 4);
+    
+    // FFT of an image
     auto fft = eye::Fourier(image);
     auto ifft = fft.inv();
     auto amp = fft.amplitude();

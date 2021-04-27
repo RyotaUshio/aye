@@ -12,7 +12,7 @@ int main() {
     auto sharp = eye::unsharp_mask(image, 4.0, 2.2);
     // auto bilateral1 = eye::bilateral(image, 8, 0.2);
     // auto bilateral2 = eye::bilateral(image, 8, 1.0);
-    
+
     eye::savetxt("images/lena_prewitt_x.txt", prewitt.diff_x);
     eye::savetxt("images/lena_prewitt_y.txt", prewitt.diff_y);
     eye::savetxt("images/lena_prewitt_mag.txt", prewitt.magnitude);
