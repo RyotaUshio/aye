@@ -4,7 +4,7 @@
 #include <vector>
 #include <set>
 
-namespace eyeball {
+namespace aye {
 
   using Label = int;
   using Binary = int;

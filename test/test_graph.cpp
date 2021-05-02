@@ -1,9 +1,9 @@
-#include <eyeball/eyeball.hpp>
+#include <aye/aye.hpp>
 using namespace python;
 
 int main() {
   try {
-    using namespace eye::algorithm;
+    using namespace aye::algorithm;
     Vertex<int, int> v1(1, 1), v2(2, 2), v3(3, 3), v4(4, 4), v5(5, 5), v6(6, 6), v7(7, 7);
     
     auto graph1 = DirectedGraph<int, int>::from_edges({Edge(v1, v2), Edge(v1, v5),
@@ -27,7 +27,7 @@ int main() {
     // print(graph2.vertices);
     // print(graph2.adj_list);
     
-    // using namespace eye::algorithm;
+    // using namespace aye::algorithm;
     // Vertex v1(1, 1), v2(2, 2), v3(3, 3), v4(4, 4), v5(5, 5), v6(6, 6), v7(7, 7);
     
     // auto graph1 = DirectedGraph<int>::from_edges({Edge(v1, v2), Edge(v1, v5),

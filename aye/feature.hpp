@@ -2,7 +2,7 @@
 
 #include <tuple> // forward_as_tuple
 
-namespace eyeball {
+namespace aye {
 
   struct Harris {
     const Image& input;

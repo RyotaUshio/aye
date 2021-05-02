@@ -1,10 +1,10 @@
-#include <eyeball/eyeball.hpp>
+#include <aye/aye.hpp>
 #include <utility>
 using namespace python;
 
 int main() {
   try {
-    eye::BinImage input({0, 0, 0, 0, 0, 0, 0, 0, 0,
+    aye::BinImage input({0, 0, 0, 0, 0, 0, 0, 0, 0,
 			 0, 0, 0, 0, 0, 0, 1, 0, 0,
 			 0, 0, 1, 0, 0, 1, 1, 0, 0,
 			 0, 1, 1, 0, 0, 0, 1, 0, 0,
@@ -16,13 +16,13 @@ int main() {
 			 0, 0, 1, 1, 1, 1, 0, 0, 0,
 			 0, 0, 0, 0, 0, 0, 0, 0, 0}, {11, 9});
 
-    using namespace eye::algorithm;
+    using namespace aye::algorithm;
 
-    eye::ConnectedComponent4 result4(input);
+    aye::ConnectedComponent4 result4(input);
     print(input);
     print(result4.label);
     
-    eye::ConnectedComponent8 result8(input);
+    aye::ConnectedComponent8 result8(input);
     print(input);
     print(result8.label);
 

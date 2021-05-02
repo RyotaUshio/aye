@@ -1,13 +1,13 @@
 #pragma once
 
-#include <eyeball/core.hpp>
+#include <aye/core.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdlib>
 
-namespace eyeball {
+namespace aye {
 
   template <class Array>
   Array normalize(const Array& image, typename Array::dtype upper_bound=255) {
@@ -46,7 +46,7 @@ namespace eyeball {
 
   template <class Array, class... Args>
   void imshow(const Array& image) {
-    std::string filename = "__eyeball_imshow__";
+    std::string filename = "__aye_imshow__";
     savetxt<Array>(filename.c_str(), image);
     std::system(("./io imshow " + filename).c_str());
     std::system(("rm " + filename).c_str());
@@ -54,7 +54,7 @@ namespace eyeball {
 
   template <class Array, class... Args>
   void savefig(const std::string& fname, const Array& image, Args... args) {
-    std::string tmpfile = "__eyeball_savefig__";
+    std::string tmpfile = "__aye_savefig__";
     savetxt<Array>(tmpfile.c_str(), image);
     std::system(("./io to_image " + tmpfile + " -o " + fname).c_str());
     std::system(("rm " + tmpfile).c_str());

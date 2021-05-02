@@ -1,8 +1,8 @@
 #pragma once
 
-#include <eyeball/core.hpp>
+#include <aye/core.hpp>
 
-namespace eyeball {
+namespace aye {
 
   np::ndarray<np::complex_> _fft_rotation_factor(np::size_type N) {
     /**

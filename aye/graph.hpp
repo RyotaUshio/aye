@@ -1,12 +1,12 @@
 #pragma once
 
-#include <eyeball/eyeball.hpp>
+#include <aye/aye.hpp>
 #include <map>
 #include <utility>
 #include <algorithm>
 #include <initializer_list>
 
-namespace eyeball {
+namespace aye {
 
   namespace algorithm {
 

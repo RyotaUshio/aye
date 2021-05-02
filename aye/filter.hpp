@@ -1,12 +1,12 @@
 #pragma once
 
-#include <eyeball/core.hpp>
+#include <aye/core.hpp>
 
 #include <cmath> // std::exp
 #include <numeric> // std::inner_product
 
 
-namespace eyeball {
+namespace aye {
 
  
   Kernel forward_diff_x({0, 0, 0,
@@ -135,7 +135,7 @@ namespace eyeball {
   }
 
   template <PadMode mode=nearest>
-  Image convolve(const Image& image, const Kernel& kernel) {
+  Image convolve(const Image& image, const Kernel& kernel, int stride=1) {
     np::size_type pad_size = kernel.shape(0) / 2;
     auto shape = image.shape();
     auto input = pad<mode>(image, pad_size);
@@ -148,7 +148,7 @@ namespace eyeball {
     		  [&](){
     		    local = input(python::slice(i, i + 2 * pad_size + 1),
 				  python::slice(j, j + 2 * pad_size + 1));
-    		    j++; if (j == shape[1]) {j = 0; i++;}
+    		    j += stride; if (j == shape[1]) {j = 0; i += stride;}
     		    return std::inner_product(local.begin(), local.end(), kernel.begin(), 0);
     		  });
     return output;
