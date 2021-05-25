@@ -17,18 +17,16 @@ int main(int argc, const char** argv) {
     auto lena = aye::loadtxt(("images/"+name+".txt").c_str());
     auto canny = aye::Canny(lena, sigma, th_low, th_high);
 
-    aye::savetxt(("images/canny_"+name+"_strong_edge.txt").c_str(),
+    aye::savefig(("images/canny_"+name+"_strong_edge.bmp").c_str(),
 		 canny.threshold_result.strong_edge);
-    aye::savetxt(("images/canny_"+name+"_may_be_edge.txt").c_str(),
+    aye::savefig(("images/canny_"+name+"_may_be_edge.bmp").c_str(),
 		 canny.threshold_result.may_be_edge);
-    aye::savetxt(("images/canny_"+name+"_grad.txt").c_str(),
+    aye::savefig(("images/canny_"+name+"_grad.bmp").c_str(),
 		 canny.grad->magnitude);
-    aye::savetxt(("images/canny_"+name+"_local_max.txt").c_str(),
+    aye::savefig(("images/canny_"+name+"_local_max.bmp").c_str(),
 		 canny.local_max);
-
-    aye::savetxt(("images/canny_"+name+"_result.txt").c_str(), 1 - canny.result());
-
-    aye::imshow(1 - canny.result());
+    aye::savefig(("images/canny_"+name+"_result.bmp").c_str(), 1 - canny.result());
+    aye::imshow(1 - canny.result(), "Result", canny.grad->magnitude, "Gradient");
     
   } catch (const std::exception& e) {
     print(e);

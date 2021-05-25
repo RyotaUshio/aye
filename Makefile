@@ -1,16 +1,16 @@
 CXX = g++
 override CXXFLAGS += -std=c++17 -O3 -Wall -I ~/numerical/numpy -I .
-HEADER = $(wildcard ./eyeball/*.hpp)
-SRC = $(wildcard ./test/*.cpp)
+HEADER = $(wildcard ./aye/*.hpp)
+SRC = $(wildcard ./test/test_*.cpp)
 EXC = $(basename $(SRC))
 
 FMT = .bmp
 TXT = $(wildcard ./images/*.txt)
 IMG = $(addsuffix $(FMT), $(basename $(TXT)))
 
-.PHONY: clean all run txt render open
+.PHONY: clean all render open
 
-all: run
+all: $(EXC)
 
 %: %.cpp $(HEADER)
 	$(CXX) $(CXXFLAGS) -o $@ $<

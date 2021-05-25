@@ -154,6 +154,29 @@ namespace aye {
     return output;
   }
 
+  enum PoolMode {average, max};
+  
+  template <PoolMode mode=average>
+  Image pool(const Image& input, int scale=2) {
+    auto size_in = input.shape(0);
+    auto size_out = size_in / scale;
+    auto output = np::empty({size_out, size_out});
+
+    using python::slice;
+      
+    for(int x=0; x<size_out; x++)
+      for(int y=0; y<size_out; y++) {
+	if constexpr (mode == average) {
+	  output(x, y) = np::mean(input(slice(x * scale, (x + 1) * scale), slice(y * scale, (y + 1) * scale)));
+	} else {
+	  output(x, y) = np::max(input(slice(x * scale, (x + 1) * scale), slice(y * scale, (y + 1) * scale)));
+	}
+      }
+
+    return output;
+  }
+
+
   template <PadMode mode=nearest, class Func, class... Args>
   Image apply_local(const Image& image, int pad_size, Func func, Args... args) {
     auto shape = image.shape();

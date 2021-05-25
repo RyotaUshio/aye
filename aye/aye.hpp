@@ -6,5 +6,6 @@
 #include <aye/fourier.hpp>
 #include <aye/graph.hpp>
 #include <aye/binary.hpp>
+#include <aye/pyramid.hpp>
+#include <aye/geometry.hpp>
 #include <aye/feature.hpp>
-// #include <aye/sample.hpp>
